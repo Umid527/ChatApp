@@ -1,0 +1,34 @@
+<ion-view ng-controller="ChatController">
+  <ion-header-bar class="bar-dark">
+    <div class="title">Chatting as {{nickname}}</div>
+  </ion-header-bar>
+
+  <div class="bar bar-subheader">
+    <p class="title">{{status_message}}</p>
+  </div>
+  <ion-content id="chat_bg" class="has-subheader has-footer" delegate-handle="mainScroll"
+               style="margin-botton:15px !important; margin-top:10px !important;">
+    <ion-list class="list">
+      <li ng-class="{'item item-avatar-right item-text-wrap-right nopadding':(socketId==msg.socketId)&& !msg.islog,
+      'item item-avatar-left item-text-wrap-left nopadding':(socketId!=msg.socketId)&& !msg.islog,'item item-divider noPadding noBg':msg.islog}"
+          ng-repeat="msg in messages">
+        <img ng-hide="msg.islog" src="{{msg.displayPicture}}">
+
+        <div
+          ng-class="{'bubbleRight':(socketId==msg.socketId)&& !msg.islog,'bubbleLeft':(socketId!=msg.socketId)&& !msg.islog}">
+          <h2 ng-hide="msg.islog"><b style="color: {{msg.color}}">{{msg.sender}}:</b></h2>
+
+          <p ng-hide="msg.islog" ng-bind-html="msg.message"></p>
+          <center><p style="color: {{msg.color}}" ng-show="msg.islog">{{msg.message}}</p></center>
+        </div>
+      </li>
+    </ion-list>
+  </ion-content>
+  <div class="bar bar-footer item-input-inset footer-item-input-insert">
+    <label class="item-input-wrapper">
+      <i class="icon ion-android-chat placeholder-icon"></i>
+      <input type="text" placeholder="Enter yout message..." ng-model="message" ng-change="updateTyping()" ng-enter="sendMessage()">
+    </label>
+    <button class="button button-clear ion-android-send icon" ng-click="sendMessage()"></button>
+  </div>
+</ion-view>
