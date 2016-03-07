@@ -29,7 +29,8 @@ angular.module('starter', ['ionic', 'btford.socket-io', 'ngSanitize', 'ngCordova
         templateUrl: 'templates/login.html'
       })
       .state('chat', {
-        url: '/chat/:nickname',
+        url: '/chat/',
+        params:{data :null},
         templateUrl: 'templates/chat.html'
       });
     $urlRouterProvider.otherwise('/login');
@@ -58,19 +59,33 @@ angular.module('starter', ['ionic', 'btford.socket-io', 'ngSanitize', 'ngCordova
     }
   })
 
-  .controller('LoginController', function ($scope, $state) {
+  .controller('LoginController', function ($scope, $state, $cordovaOauth) {
     $scope.join = function (nickname) {
       if (nickname) {
-        $state.go('chat', {nickname: nickname})
+        $state.go('chat',{data : {nickname: nickname, displayPicture: "https://www.iconaholic.com/work/bartender-icon.png" }})
       }
     }
+    $scope.loginWithFacebook = function () {
+      $cordovaOauth.facebook("1779649648921978", ["email"]).then(function (result) {
+        //alert(result.access_token);
+        $http.get('https://graph.facebook.com/v2.4/me?fields=id,name,picture&access_token=' + result.access_token)
+          .success(function (data, status, header, config) {
+            $scope.user.fullName = data.name;
+            $scope.user.displayPicture = data.picture.data.url;
+            //alert($scope.user.fullName + " " + $scope.user.displayPicture);
+            $state.go('chat', {data: {nickname: $scope.user.fullName, displayPicture: $scope.user.displayPicture}});
+          })
+      }, function (error) {
+        alert(error);
+      });
+    }
   })
-  .controller('ChatController', function ($scope,$timeout, $stateParams, Socket, $ionicScrollDelegate, $sce, $cordovaMedia) {
+  .controller('ChatController', function ($scope, $timeout, $stateParams, Socket, $ionicScrollDelegate, $sce, $cordovaMedia) {
 
       $scope.status_message = "Wellcome to ChatApp";
       $scope.messages = [];
-      $scope.nickname = $stateParams.nickname;
-    $scope.displayPicture="https://www.iconaholic.com/work/bartender-icon.png";
+      $scope.nickname = $stateParams.data.nickname;
+      $scope.displayPicture = $stateParams.data.displayPicture;
       var COLORS = ['#f44336', '#E91E63', '#9C27B0', '#673AB7', '#3F51B5', '#009688'];
       Socket.on("connect", function () {
 
@@ -80,7 +95,7 @@ angular.module('starter', ['ionic', 'btford.socket-io', 'ngSanitize', 'ngCordova
           sender: $scope.nickname,
           socketId: $scope.socketId,
           islog: true,
-          displayPicture:"",
+          displayPicture: "",
           color: $scope.getUsernameColor($scope.nickname)
         };
         Socket.emit("Message", data);
@@ -145,7 +160,7 @@ angular.module('starter', ['ionic', 'btford.socket-io', 'ngSanitize', 'ngCordova
         newMessage.message = $scope.message;
         newMessage.socketId = $scope.socketId;
         newMessage.islog = $scope.islog;
-        newMessage.displayPicture=$scope.displayPicture;
+        newMessage.displayPicture = $scope.displayPicture;
         newMessage.color = $scope.getUsernameColor($scope.nickname);
         Socket.emit("Message", newMessage);
         $scope.message = '';
